@@ -30,7 +30,7 @@ body.idle{cursor:none}
 .dial{width:min(35vh,34vw)}
 .dial svg{width:100%;height:auto;display:block}
 .legend{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap;margin-top:.3rem}
-.info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto auto auto minmax(0,1fr);gap:.7rem;min-width:0;min-height:0;contain:size;overflow:hidden}
+.info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto auto auto minmax(0,1fr);gap:.7rem;min-width:0;height:0;min-height:100%;overflow:hidden}
 .full{grid-column:1/-1}
 .head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
 .chip{font-size:.85rem;padding:.25rem .7rem;border-radius:.45rem;white-space:nowrap}
@@ -105,10 +105,15 @@ body.idle{cursor:none}
   html,body{overflow:auto}
   .app{height:auto;min-height:100vh}
   .top{grid-template-columns:1fr}
-  .info{contain:none;overflow:visible}
+  .info{height:auto;min-height:0;overflow:visible}
   .dial{width:min(72vw,40vh);margin:0 auto}
   .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tl{min-height:26rem}
+}
+/* ── tela baixa (notebook com barras do navegador, tablet no Chrome) ── */
+@media (max-height: 820px) and (min-aspect-ratio: 1/1){
+  .dial{width:min(31vh,30vw)}
+  .legend{font-size:.68rem;gap:.5rem}
 }
 /* ── tela muito baixa: deixa rolar em vez de espremer ── */
 @media (max-height: 600px) and (min-aspect-ratio: 1/1){
