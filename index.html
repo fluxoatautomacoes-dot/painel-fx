@@ -93,6 +93,8 @@ body.idle{cursor:none}
 .tvta .tradingview-widget-container{height:470px!important;width:125%!important;transform:scale(.8);transform-origin:top left}
 .tvta .vazio,.mkt .vazio{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4357;font-size:.8rem;pointer-events:none}
 .mkt{position:relative;padding:.1rem .3rem;height:max(4.6rem,64px);overflow:hidden}
+.mkt.fita{height:max(3.4rem,50px);display:flex;align-items:center}
+.mkt.fita .tradingview-widget-container{width:100%}
 .credit{color:var(--mu);font-size:.75rem;text-decoration:none}
 .credit:hover{color:var(--tx)}
 .ivs{display:flex;gap:.25rem;align-items:center}
@@ -148,7 +150,7 @@ body.idle{cursor:none}
       <div class="box city" id="c-LON"></div>
       <div class="box city" id="c-NY"></div>
       <div class="box city" id="c-TK"></div>
-      <div class="full box mkt" id="mkt-pares"><div class="vazio">carregando cotações do TradingView…</div></div>
+      <div class="full box mkt fita" id="mkt-pares"><div class="vazio">carregando cotações do TradingView…</div></div>
       <div class="full box mkt" id="mkt-motores"><div class="vazio">carregando motores…</div></div>
       <div class="full box cal" id="cal"></div>
     </div>
@@ -450,8 +452,9 @@ document.getElementById('ivs').addEventListener('click', e => {
   montaMedidores();
 });
 
-tvWidget(document.getElementById('mkt-pares'), 'embed-widget-tickers.js', {
-  symbols: MERCADO_PARES, isTransparent: true, showSymbolLogo: false, colorTheme: 'dark', locale: 'br'
+// pares numa fita rolante: cabem os 5 em qualquer largura de tela
+tvWidget(document.getElementById('mkt-pares'), 'embed-widget-ticker-tape.js', {
+  symbols: MERCADO_PARES, isTransparent: true, showSymbolLogo: false, displayMode: 'adaptive', colorTheme: 'dark', locale: 'br'
 }, 'carregando cotações do TradingView…');
 tvWidget(document.getElementById('mkt-motores'), 'embed-widget-tickers.js', {
   symbols: MERCADO_MOTORES, isTransparent: true, showSymbolLogo: false, colorTheme: 'dark', locale: 'br'
