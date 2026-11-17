@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel FX</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-512.png">
+<link rel="apple-touch-icon" href="icone-512.png">
+<meta name="theme-color" content="#0b0f17">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{
+  --bg:#0b0f17; --card:#121826; --line:#1f2737; --grid:#182030; --tx:#e5e7eb; --mu:#8b93a7;
+  --tk:#5b8def; --lon:#a78bfa; --ny:#f59e0b; --ok:#22c55e; --good:#1f6f5c; --bad:#ef4444; --roll:#7f1d1d;
+  --ev:#f59e0b; --evd:#f87171;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(11px, calc(1.1vmin + 0.15vw), 22px)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Inter,system-ui,sans-serif;overflow:hidden}
+body.idle{cursor:none}
+.app{height:100vh;display:grid;grid-template-rows:auto auto minmax(14rem,1fr);gap:.8rem;padding:1rem 1.2rem}
+.mu{color:var(--mu);font-size:.8rem}
+.mono{font-family:var(--mono)}
+.box{background:var(--card);border-radius:.7rem;padding:.6rem .8rem;min-width:0}
+
+/* ── topo ── */
+.top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.4rem;min-height:0}
+.dial{width:min(35vh,34vw)}
+.dial svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap;margin-top:.3rem}
+.info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto auto auto minmax(0,1fr);gap:.7rem;min-width:0;min-height:0;contain:size;overflow:hidden}
+.full{grid-column:1/-1}
+.head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.chip{font-size:.85rem;padding:.25rem .7rem;border-radius:.45rem;white-space:nowrap}
+.btn{margin-left:auto;background:transparent;color:var(--mu);border:1px solid var(--line);border-radius:.45rem;padding:.25rem .7rem;font:inherit;font-size:.8rem;cursor:pointer}
+.btn:hover{color:var(--tx);border-color:#3a4357}
+.nextname{font-size:1.15rem;font-weight:500}
+.nextcd{font-family:var(--mono);font-size:1.5rem;color:var(--ev)}
+.city{border-top:.15rem solid var(--line);border-radius:0 0 .7rem .7rem}
+.ctime{font-family:var(--mono);font-size:1.4rem;color:#fff}
+.gauge{position:relative;height:.45rem;border-radius:.25rem;background:var(--line)}
+.gauge .neg{position:absolute;left:0;width:50%;height:100%;border-radius:.25rem 0 0 .25rem;background:#3b1d22}
+.gauge .pos{position:absolute;right:0;width:50%;height:100%;border-radius:0 .25rem .25rem 0;background:#173225}
+.gauge .mid{position:absolute;left:50%;top:-.15rem;width:1px;height:.75rem;background:#3a4357}
+.gauge .mk{position:absolute;top:-.25rem;width:.7rem;height:.95rem;border-radius:.2rem;transform:translateX(-50%)}
+.usd{display:flex;align-items:center;gap:.8rem}
+.usd .gauge{flex:1}
+.cal{overflow:hidden;display:flex;flex-direction:column;gap:.25rem}
+.ev{display:grid;grid-template-columns:3.6rem 3.2rem minmax(0,1fr) auto;gap:.5rem;font-size:.85rem;align-items:center;padding:.15rem 0;border-top:1px solid var(--line)}
+.ev.past{opacity:.4}
+.ev .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stars{color:var(--evd);letter-spacing:.05rem}
+
+/* ── cartões ── */
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.7rem}
+.card{display:flex;flex-direction:column;gap:.35rem}
+.card .row{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem}
+.pname{font-weight:500;font-size:1rem}
+.score{font-family:var(--mono);font-size:1.5rem;font-weight:500}
+.q{font-size:.8rem;text-align:center;padding:.2rem;border-radius:.45rem}
+.q-ok{background:#14532d;color:#86efac}
+.q-good{background:#1f3b35;color:#99f6e4}
+.q-weak{background:var(--line);color:var(--mu)}
+.q-roll{background:var(--roll);color:#fecaca}
+.q-off{background:var(--line);color:var(--mu)}
+.thin{height:.2rem;border-radius:.1rem;background:var(--line)}
+.thin>div{height:100%;border-radius:.1rem}
+
+/* ── linha do tempo ── */
+.tl{display:grid;grid-template-columns:7.5rem minmax(0,1fr);
+    grid-template-rows:1.3rem 2.1rem 2.1rem repeat(3,minmax(.85rem,1fr)) .4rem repeat(5,minmax(1.1rem,1fr));
+    column-gap:.6rem;min-height:0}
+.lab{grid-column:1;display:flex;align-items:center;gap:.4rem;font-size:.9rem;white-space:nowrap;overflow:hidden}
+.trk{grid-column:2;position:relative;z-index:1}
+.trk.bg::before{content:"";position:absolute;left:0;right:0;top:22%;bottom:22%;background:var(--card);border-radius:.35rem}
+.seg{position:absolute;top:22%;bottom:22%;border-radius:.35rem}
+.sep{grid-column:1/-1;align-self:center;height:1px;background:var(--line)}
+.ovg{grid-column:2;position:relative;z-index:0;pointer-events:none}
+.ovn{grid-column:2;position:relative;z-index:3;pointer-events:none}
+.hr{position:absolute;top:1.4rem;bottom:0;width:1px;background:var(--grid)}
+.hl{position:absolute;top:0;transform:translateX(-50%);font-family:var(--mono);font-size:.8rem;color:var(--mu)}
+.dot{position:absolute;width:.5rem;height:.5rem;border-radius:50%;transform:translate(-50%,-50%);top:50%}
+.elab{position:absolute;transform:translateX(-50%);font-size:.75rem;white-space:nowrap}
+.vline{position:absolute;top:1.4rem;bottom:0;width:0;border-left:1px dashed var(--evd);opacity:.45}
+.now{position:absolute;top:1.4rem;bottom:1.4rem;width:2px;background:#fff;transform:translateX(-1px)}
+.nowchip{position:absolute;bottom:0;transform:translateX(-50%);background:#fff;color:var(--bg);font-family:var(--mono);font-size:.8rem;padding:.1rem .45rem;border-radius:.3rem}
+.qd{width:.55rem;height:.55rem;border-radius:50%;flex:none}
+
+/* ── widgets do TradingView ── */
+.tvta{height:clamp(203px,22vh,280px);margin:0 -.5rem;position:relative;overflow:hidden}
+.tvta .tradingview-widget-container{height:470px!important;width:125%!important;transform:scale(.8);transform-origin:top left}
+.tvta .vazio,.mkt .vazio{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4357;font-size:.8rem;pointer-events:none}
+.mkt{position:relative;padding:.1rem .3rem;height:max(4.6rem,64px);overflow:hidden}
+.credit{color:var(--mu);font-size:.75rem;text-decoration:none}
+.credit:hover{color:var(--tx)}
+.ivs{display:flex;gap:.25rem;align-items:center}
+.iv{background:transparent;color:var(--mu);border:1px solid var(--line);border-radius:.4rem;padding:.15rem .5rem;font:inherit;font-size:.8rem;cursor:pointer}
+.iv.on{background:#1f2737;color:#fff;border-color:#3a4357}
+.foot{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
+
+/* ── tela em pé (monitor girado) ou janela estreita ── */
+@media (max-aspect-ratio: 1/1){
+  html,body{overflow:auto}
+  .app{height:auto;min-height:100vh}
+  .top{grid-template-columns:1fr}
+  .info{contain:none;overflow:visible}
+  .dial{width:min(72vw,40vh);margin:0 auto}
+  .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tl{min-height:26rem}
+}
+/* ── tela muito baixa: deixa rolar em vez de espremer ── */
+@media (max-height: 600px) and (min-aspect-ratio: 1/1){
+  html,body{overflow:auto}
+  .app{height:auto}
+  .tl{min-height:20rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="top">
+    <div class="dial">
+      <svg id="dial" viewBox="0 0 300 300" role="img" aria-label="Relógio de 24 horas com as sessões"></svg>
+      <div class="legend mu">
+        <span><span style="color:var(--tk)">●</span> Tóquio</span>
+        <span><span style="color:var(--lon)">●</span> Londres</span>
+        <span><span style="color:var(--ny)">●</span> Nova York</span>
+        <span><span style="color:var(--ok)">●</span> janela principal</span>
+        <span><span style="color:var(--evd)">●</span> calendário</span>
+      </div>
+    </div>
+    <div class="info">
+      <div class="full head">
+        <span id="ses" class="chip"></span>
+        <span id="dt" class="mu"></span>
+        <span class="ivs" style="margin-left:auto"><span class="mu">Termômetro:</span><span class="ivs" id="ivs"></span></span>
+        <button class="btn" id="fs" title="Tecla F" style="margin-left:0">⛶ Tela cheia</button>
+        <a class="credit" href="https://br.tradingview.com/" target="_blank" rel="noopener">cotações e medidores: TradingView</a>
+      </div>
+      <div class="full box" id="next"></div>
+      <div class="box city" id="c-LON"></div>
+      <div class="box city" id="c-NY"></div>
+      <div class="box city" id="c-TK"></div>
+      <div class="full box mkt" id="mkt-pares"><div class="vazio">carregando cotações do TradingView…</div></div>
+      <div class="full box mkt" id="mkt-motores"><div class="vazio">carregando motores…</div></div>
+      <div class="full box cal" id="cal"></div>
+    </div>
+  </section>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="tl" id="tl"></section>
+</div>
+
+<script src="eventos.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Painel FX · etapa 1 (relógio, sessões, janelas, calendário)
+// Termômetro: lê window.DADOS quando existir (etapa 2). Sem dados → "aguardando dados".
+// ═══════════════════════════════════════════════════════════════
+const TZ = { BR:'America/Sao_Paulo', LON:'Europe/London', NY:'America/New_York', TK:'Asia/Tokyo' };
+const PARES = ['XAUUSD','EURUSD','GBPUSD','USDJPY','GBPJPY'];
+
+// Sessões em hora LOCAL de cada praça (horário de verão se ajusta sozinho)
+const SESSOES = { TK:[TZ.TK,9,18], LON:[TZ.LON,8,17], NY:[TZ.NY,8,17] };
+
+// Janelas de cada par em hora LOCAL da praça que manda naquele horário
+// o = ótimo · b = bom   (base: volatilidade por hora, nota "Estatísticas de Volatilidade (ADR)")
+const JANELAS = {
+  XAUUSD:{ o:[[TZ.NY,8,11]],                b:[[TZ.LON,8,13],[TZ.NY,11,14]] },
+  EURUSD:{ o:[[TZ.NY,8,11]],                b:[[TZ.LON,8,13],[TZ.NY,11,12]] },
+  GBPUSD:{ o:[[TZ.LON,7,9],[TZ.NY,8,10]],   b:[[TZ.LON,9,13],[TZ.NY,10,12]] },
+  USDJPY:{ o:[[TZ.NY,8,10],[TZ.TK,9,11]],   b:[[TZ.LON,8,13],[TZ.NY,10,12],[TZ.TK,11,14]] },
+  GBPJPY:{ o:[[TZ.LON,7,9],[TZ.NY,8,10]],   b:[[TZ.LON,9,13],[TZ.NY,10,12],[TZ.TK,9,14]] },
+};
+const ROLLOVER = [TZ.NY,17,18];
+
+// Horários fixos de todo dia
+const FIXOS = [
+  ['Dados do Reino Unido','UK',  TZ.LON, 7],
+  ['Abertura de Londres','LON',  TZ.LON, 8],
+  ['Abertura de Nova York','NY', TZ.NY,  8],
+  ['Horário dos dados dos EUA','EUA', TZ.NY, 8.5],
+  ['Fixing do ouro (LBMA)','FIX',TZ.LON, 15],
+  ['Fechamento de Londres','FCH',TZ.LON, 17],
+  ['Rollover · spread abre','ROL',TZ.NY, 17],
+  ['Abertura de Tóquio','TÓQ',   TZ.TK,  9],
+];
+
+// ── utilidades de tempo ──
+const pad = n => String(n).padStart(2,'0');
+const norm = h => ((h % 24) + 24) % 24;
+const fmtCache = {};
+function partes(tz, d){
+  if(!fmtCache[tz]) fmtCache[tz] = new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',weekday:'short'});
+  const o = {}; fmtCache[tz].formatToParts(d).forEach(p => o[p.type] = p.value);
+  return { h:(+o.hour)%24, m:+o.minute, s:+o.second, wd:o.weekday, ymd:`${o.year}-${o.month}-${o.day}` };
+}
+let OFF = {};
+const toBR = (tz, h) => norm(h - OFF[tz]);
+const inR = (now, a, b) => { a = norm(a); b = norm(b); return a < b ? (now >= a && now < b) : (now >= a || now < b); };
+const segs = (a, b) => { a = norm(a); b = norm(b); return a < b ? [[a,b]] : [[a,24],[0,b]]; };
+const ate = (h, nowM) => ((Math.round(norm(h)*60) - nowM) % 1440 + 1440) % 1440;
+const hhmm = h => { const t = Math.round(norm(h)*60) % 1440; return `${pad(Math.floor(t/60))}:${pad(t%60)}`; };
+const dur = m => { m = Math.round(m); const h = Math.floor(m/60); return h ? `${h}h${pad(m%60)}` : `${m} min`; };
+const pct = h => (norm(h)/24*100).toFixed(3) + '%';
+const win = ([tz,a,b]) => [toBR(tz,a), toBR(tz,b)];
+
+// ── mercado fechado? (sexta 17:00 NY → domingo 17:00 NY) ──
+function fechado(ny){
+  const t = ny.h*60 + ny.m;
+  if(ny.wd === 'Fri' && ny.h >= 17) return 48*60 - (t - 17*60);
+  if(ny.wd === 'Sat') return 48*60 - (7*60 + t);
+  if(ny.wd === 'Sun' && ny.h < 17) return 48*60 - (31*60 + t);
+  return 0;
+}
+
+// ── qualidade da hora para um par ──
+function qualidade(p, now, closed){
+  if(closed) return ['Mercado fechado','q-off','#5d606b'];
+  const [ra, rb] = win(ROLLOVER);
+  if(inR(now, ra, rb)) return ['Evitar · rollover','q-roll','#ef4444'];
+  if(JANELAS[p].o.some(w => inR(now, ...win(w)))) return ['Ótimo agora','q-ok','#22c55e'];
+  if(JANELAS[p].b.some(w => inR(now, ...win(w)))) return ['Hora boa','q-good','#2dd4bf'];
+  return ['Hora fraca','q-weak','#5d606b'];
+}
+function proximaOtima(p, now, nowM){
+  for(const w of JANELAS[p].o){ const [a,b] = win(w); if(inR(now,a,b)) return `ótimo até ${hhmm(b)}`; }
+  let best = null;
+  for(const w of JANELAS[p].o){ const [a] = win(w); const m = ate(a, nowM); if(best === null || m < best[0]) best = [m, a]; }
+  return `próxima ótima ${hhmm(best[1])} · em ${dur(best[0])}`;
+}
+
+// ── eventos do calendário (eventos.js) ──
+function eventosHoje(ymd){
+  const L = Array.isArray(window.EVENTOS) ? window.EVENTOS : [];
+  return L.filter(e => e.data === ymd).map(e => {
+    const [h, m] = String(e.hora).split(':').map(Number);
+    return { ...e, h: h + (m||0)/60 };
+  }).sort((a,b) => a.h - b.h);
+}
+
+// ── relógio radial ──
+const C = 150;
+const P = (r, a) => [C + r*Math.cos(a), C + r*Math.sin(a)];
+const ang = h => h/24*2*Math.PI - Math.PI/2;
+function arco(r, h1, h2, cor, w){
+  h1 = norm(h1); let d = (norm(h2) - h1 + 24) % 24 || 24;
+  const [x1,y1] = P(r, ang(h1)), [x2,y2] = P(r, ang(h1 + d));
+  return `<path d="M${x1} ${y1} A${r} ${r} 0 ${d>12?1:0} 1 ${x2} ${y2}" stroke="${cor}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+}
+function desenhaRelogio(br, now, ses, hoje, closed){
+  let g = `<circle cx="${C}" cy="${C}" r="144" fill="#121826"/>`;
+  for(let h = 0; h < 24; h++){
+    const [x1,y1] = P(138, ang(h)), [x2,y2] = P(h % 3 ? 134 : 129, ang(h));
+    g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#3a4357" stroke-width="1"/>`;
+  }
+  [0,3,6,9,12,15,18,21].forEach(h => { const [tx,ty] = P(119, ang(h)); g += `<text x="${tx}" y="${ty+4}" text-anchor="middle" fill="#8b93a7" font-size="11">${pad(h)}</text>`; });
+  g += arco(105, ...ses.TK,  '#5b8def', 9);
+  g += arco(93,  ...ses.LON, '#a78bfa', 9);
+  g += arco(81,  ...ses.NY,  '#f59e0b', 9);
+  g += arco(142, ses.NY[0], ses.LON[1], '#22c55e', 5);
+  hoje.forEach(e => { const [ex,ey] = P(142, ang(e.h)); g += `<circle cx="${ex}" cy="${ey}" r="${e.impacto >= 3 ? 5 : 3.5}" fill="#f87171" stroke="#0b0f17" stroke-width="1.5"><title>${hhmm(e.h)} · ${e.nome}</title></circle>`; });
+  g += `<circle cx="${C}" cy="${C}" r="67" fill="#0b0f17"/>`;
+  const [hx,hy] = P(142, ang(now)), [h0x,h0y] = P(70, ang(now));
+  g += `<line x1="${h0x}" y1="${h0y}" x2="${hx}" y2="${hy}" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="${hx}" cy="${hy}" r="4.5" fill="#fff"/>`;
+  g += `<text x="${C}" y="${C-2}" text-anchor="middle" fill="#fff" font-size="28" font-family="Cascadia Mono, Consolas, monospace">${pad(br.h)}:${pad(br.m)}</text>`;
+  g += `<text x="${C}" y="${C+18}" text-anchor="middle" fill="#8b93a7" font-size="12" font-family="Cascadia Mono, Consolas, monospace">:${pad(br.s)} · Brasília</text>`;
+  if(closed) g += `<text x="${C}" y="${C+36}" text-anchor="middle" fill="#ef4444" font-size="11">mercado fechado</text>`;
+  document.getElementById('dial').innerHTML = g;
+}
+
+// ── termômetro (etapa 2: window.DADOS = { XAUUSD:{score,preco,adr}, ... }) ──
+function corScore(s){ return s >= 25 ? '#22c55e' : s <= -25 ? '#ef4444' : '#8b93a7'; }
+function rotulo(s){ return s >= 60 ? 'Compra forte' : s >= 25 ? 'Compra' : s > -25 ? 'Neutro' : s > -60 ? 'Venda' : 'Venda forte'; }
+function gauge(s){
+  const mk = (s === null || s === undefined) ? '' : `<div class="mk" style="left:${50 + s/2}%;background:${corScore(s)}"></div>`;
+  return `<div class="gauge"><div class="neg"></div><div class="pos"></div><div class="mid"></div>${mk}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+function tick(){
+  const d = new Date();
+  const br = partes(TZ.BR, d), lon = partes(TZ.LON, d), ny = partes(TZ.NY, d), tk = partes(TZ.TK, d);
+  OFF = { [TZ.BR]:0, [TZ.LON]:norm(lon.h - br.h), [TZ.NY]:norm(ny.h - br.h), [TZ.TK]:norm(tk.h - br.h) };
+  const now = br.h + br.m/60 + br.s/3600, nowM = br.h*60 + br.m + br.s/60;
+  const ses = { TK:win(SESSOES.TK), LON:win(SESSOES.LON), NY:win(SESSOES.NY) };
+  const aberto = k => inR(now, ...ses[k]);
+  const resta = fechado(ny), closed = resta > 0;
+  const hoje = eventosHoje(br.ymd);
+
+  // cabeçalho
+  const both = !closed && aberto('LON') && aberto('NY');
+  const sn = closed ? 'Mercado fechado' : both ? 'Londres + NY · janela principal' : aberto('LON') ? 'Londres' : aberto('NY') ? 'Nova York' : aberto('TK') ? 'Tóquio' : 'Entre sessões · mercado fino';
+  const se = document.getElementById('ses');
+  se.textContent = sn;
+  se.style.background = closed ? '#3b1d22' : both ? '#14532d' : '#1f2737';
+  se.style.color = closed ? '#fecaca' : both ? '#86efac' : '#e5e7eb';
+  document.getElementById('dt').textContent = new Intl.DateTimeFormat('pt-BR',{timeZone:TZ.BR,weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}).format(d);
+
+  // próximo evento
+  let lista = FIXOS.map(([n,k,tz,h]) => ({ nome:n, h:toBR(tz,h), cal:false }));
+  hoje.forEach(e => lista.push({ nome:e.nome, h:e.h, cal:true, imp:e.impacto, futuro: e.h*60 > nowM }));
+  lista = lista.filter(e => !e.cal || e.futuro).map(e => ({ ...e, m: ate(e.h, nowM) })).sort((a,b) => a.m - b.m);
+  const nx = document.getElementById('next');
+  if(closed){
+    nx.innerHTML = `<div class="mu">Mercado fechado</div><div class="row" style="display:flex;justify-content:space-between;align-items:baseline;gap:.6rem"><span class="nextname">Reabertura (domingo, Sydney/Tóquio)</span><span class="nextcd">${dur(resta)}</span></div><div class="mu">às ${hhmm(toBR(TZ.NY,17))} Brasília</div>`;
+  } else {
+    const a = lista[0], b = lista[1];
+    nx.innerHTML = `<div class="mu">Próximo evento</div><div style="display:flex;justify-content:space-between;align-items:baseline;gap:.6rem"><span class="nextname" style="${a.cal ? 'color:#f87171' : ''}">${a.nome}</span><span class="nextcd">${dur(a.m)}</span></div><div class="mu">${hhmm(a.h)} Brasília · depois: ${b.nome} às ${hhmm(b.h)}</div>`;
+  }
+
+  // cidades
+  [['LON','Londres',lon,'#a78bfa'],['NY','Nova York',ny,'#f59e0b'],['TK','Tóquio',tk,'#5b8def']].forEach(([k,n,pt,cor]) => {
+    const o = !closed && aberto(k);
+    const alvo = o ? ses[k][1] : ses[k][0];
+    const txt = closed ? '○ fim de semana' : o ? `● fecha em ${dur(ate(alvo, nowM))}` : `○ abre em ${dur(ate(alvo, nowM))}`;
+    const el = document.getElementById('c-' + k);
+    el.style.borderTopColor = o ? cor : 'var(--line)';
+    el.innerHTML = `<div class="mu">${n}</div><div class="ctime">${pad(pt.h)}:${pad(pt.m)}</div><div style="font-size:.8rem;color:${o ? '#22c55e' : '#8b93a7'}">${txt}</div>`;
+  });
+
+  // calendário do dia
+  const cal = document.getElementById('cal');
+  // em tela baixa a caixa do calendário fica pequena demais: esconde em vez de mostrar meia linha
+  const fs = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  cal.style.visibility = cal.clientHeight < 3.2 * fs ? 'hidden' : 'visible';
+  if(hoje.length === 0){
+    cal.innerHTML = `<div class="mu">Calendário de hoje</div><div class="mu" style="padding-top:.3rem">Nenhum evento cadastrado para hoje · editar <span class="mono">eventos.js</span></div>`;
+  } else {
+    cal.innerHTML = `<div class="mu">Calendário de hoje</div>` + hoje.map(e =>
+      `<div class="ev ${e.h*60 <= nowM ? 'past' : ''}"><span class="mono">${hhmm(e.h)}</span><span class="mu">${e.pais || ''}</span><span class="nm" title="${e.nome}">${e.nome}</span><span class="stars">${'★'.repeat(e.impacto || 1)}</span></div>`).join('');
+  }
+
+  // tira o aviso "carregando…" de trás dos widgets que já chegaram (o fundo deles é transparente)
+  document.querySelectorAll('.vazio').forEach(v => { if(v.parentElement && v.parentElement.querySelector('iframe')) v.remove(); });
+
+  // cartões (só o selo de horário muda a cada segundo; o widget fica intacto)
+  PARES.forEach(p => {
+    const [qt, qc] = qualidade(p, now, closed);
+    const q = document.getElementById('q-' + p);
+    q.className = 'q ' + qc; q.textContent = qt;
+    document.getElementById('px-' + p).textContent = closed ? '' : proximaOtima(p, now, nowM);
+  });
+
+  // linha do tempo
+  let t = '';
+  t += `<div class="ovg" style="grid-row:1/-1">`;
+  for(let h = 0; h <= 24; h += 3) t += `<div class="hr" style="left:${h/24*100}%"></div><div class="hl" style="left:${h/24*100}%">${pad(h%24)}:00</div>`;
+  hoje.filter(e => e.impacto >= 3).forEach(e => t += `<div class="vline" style="left:${pct(e.h)}"></div>`);
+  t += `</div>`;
+
+  const fx = FIXOS.map(([n,k,tz,h]) => [n,k,toBR(tz,h)]).sort((a,b) => a[2]-b[2]);
+  t += `<div class="lab mu" style="grid-row:2">Horários</div><div class="trk" style="grid-row:2">`;
+  fx.forEach(([n,k,h],i) => t += `<div class="dot" style="left:${pct(h)};background:var(--ev)" title="${hhmm(h)} · ${n}"></div><div class="elab" style="left:${pct(h)};color:var(--ev);${i%2 ? 'bottom:-.15rem' : 'top:-.15rem'}">${k}</div>`);
+  t += `</div>`;
+
+  t += `<div class="lab mu" style="grid-row:3">Calendário</div><div class="trk" style="grid-row:3">`;
+  hoje.forEach((e,i) => t += `<div class="dot" style="left:${pct(e.h)};background:var(--evd);width:${e.impacto>=3?'.75rem':'.55rem'};height:${e.impacto>=3?'.75rem':'.55rem'}" title="${hhmm(e.h)} · ${e.nome}"></div><div class="elab" style="left:${pct(e.h)};color:var(--evd);bottom:-.15rem">${e.curto || e.nome}</div>`);
+  if(hoje.length === 0) t += `<div class="elab mu" style="left:50%;top:30%">sem eventos cadastrados hoje</div>`;
+  t += `</div>`;
+
+  [['TK','Tóquio','#5b8def'],['LON','Londres','#a78bfa'],['NY','Nova York','#f59e0b']].forEach(([k,n,cor],i) => {
+    const r = 4 + i, o = !closed && aberto(k);
+    t += `<div class="lab" style="grid-row:${r};color:${o ? '#e5e7eb' : '#8b93a7'}">${n}</div><div class="trk bg" style="grid-row:${r}">`;
+    segs(...ses[k]).forEach(([a,b]) => t += `<div class="seg" style="left:${a/24*100}%;width:${(b-a)/24*100}%;background:${cor};opacity:${o ? 1 : .55}"></div>`);
+    t += `</div>`;
+  });
+  t += `<div class="sep" style="grid-row:7"></div>`;
+
+  PARES.forEach((p,i) => {
+    const r = 8 + i, [, , qd] = qualidade(p, now, closed);
+    t += `<div class="lab" style="grid-row:${r}"><span class="qd" style="background:${qd}"></span>${p}</div><div class="trk bg" style="grid-row:${r}">`;
+    JANELAS[p].b.forEach(w => segs(...win(w)).forEach(([a,b]) => t += `<div class="seg" style="left:${a/24*100}%;width:${(b-a)/24*100}%;background:#1f6f5c"></div>`));
+    JANELAS[p].o.forEach(w => segs(...win(w)).forEach(([a,b]) => t += `<div class="seg" style="left:${a/24*100}%;width:${(b-a)/24*100}%;background:#22c55e"></div>`));
+    segs(...win(ROLLOVER)).forEach(([a,b]) => t += `<div class="seg" style="left:${a/24*100}%;width:${(b-a)/24*100}%;background:#7f1d1d"></div>`);
+    t += `</div>`;
+  });
+
+  t += `<div class="ovn" style="grid-row:1/-1"><div class="now" style="left:${pct(now)}"></div><div class="nowchip" style="left:${pct(now)}">${pad(br.h)}:${pad(br.m)}</div></div>`;
+  document.getElementById('tl').innerHTML = t;
+
+  desenhaRelogio(br, now, ses, hoje, closed);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WIDGETS DO TRADINGVIEW (cotação ao vivo + medidor técnico)
+// ═══════════════════════════════════════════════════════════════
+const SIMBOLO = { XAUUSD:'OANDA:XAUUSD', EURUSD:'OANDA:EURUSD', GBPUSD:'OANDA:GBPUSD', USDJPY:'OANDA:USDJPY', GBPJPY:'OANDA:GBPJPY' };
+const ADR_MEDIO = { XAUUSD:'ADR ≈ US$ 100', EURUSD:'ADR 61 pips', GBPUSD:'ADR 80 pips', USDJPY:'ADR 102 pips', GBPJPY:'ADR 133 pips' };
+const MERCADO_PARES = [
+  { proName:'OANDA:XAUUSD', title:'Ouro' }, { proName:'OANDA:EURUSD', title:'EURUSD' }, { proName:'OANDA:GBPUSD', title:'GBPUSD' },
+  { proName:'OANDA:USDJPY', title:'USDJPY' }, { proName:'OANDA:GBPJPY', title:'GBPJPY' },
+];
+// Os símbolos TVC (DXY e juros oficiais) não são liberados em widget. Substitutos testados em 16/11/2026:
+// títulos do Tesouro americano cotados em PREÇO → preço sobe = juro CAI
+const MERCADO_MOTORES = [
+  { proName:'CAPITALCOM:DXY',  title:'Dólar (DXY)' },
+  { proName:'OANDA:USB10YUSD', title:'Título EUA 10a (↑ = juro ↓)' },
+  { proName:'OANDA:USB02YUSD', title:'Título EUA 2a (↑ = juro ↓)' },
+  { proName:'OANDA:SPX500USD', title:'S&P 500' },
+];
+const TEMPOS = [['5m','5m'],['15m','15m'],['1h','1h'],['4h','4h'],['1D','Dia']];
+
+function tvWidget(el, arquivo, cfg, aviso, tentativa = 0){
+  const geracao = String(Math.random());
+  el.dataset.geracao = geracao;
+  // se o TradingView não entregar o widget em 9 s, tenta de novo (até 3 vezes)
+  setTimeout(() => {
+    if(el.dataset.geracao === geracao && !el.querySelector('iframe') && tentativa < 3)
+      tvWidget(el, arquivo, cfg, aviso, tentativa + 1);
+  }, 9000);
+  el.innerHTML = `<div class="vazio">${aviso}</div>`;
+  const c = document.createElement('div'); c.className = 'tradingview-widget-container'; c.style.cssText = 'height:100%;width:100%';
+  const w = document.createElement('div'); w.className = 'tradingview-widget-container__widget'; w.style.cssText = 'height:100%;width:100%';
+  const s = document.createElement('script'); s.type = 'text/javascript'; s.async = true;
+  s.src = 'https://s3.tradingview.com/external-embedding/' + arquivo;
+  s.innerHTML = JSON.stringify(cfg);
+  c.appendChild(w); c.appendChild(s); el.appendChild(c);
+}
+
+// cartões: montados UMA vez
+document.getElementById('cards').innerHTML = PARES.map(p => `
+  <div class="box card">
+    <div class="row"><span class="pname">${p}</span><span class="mu">${ADR_MEDIO[p]}</span></div>
+    <div class="tvta" id="ta-${p}"></div>
+    <div class="q" id="q-${p}"></div>
+    <div class="mu" style="text-align:center" id="px-${p}"></div>
+  </div>`).join('');
+
+let tempo = '15m';
+try { tempo = localStorage.getItem('painelfx-tempo') || '15m'; } catch(e){}
+function montaMedidores(){
+  PARES.forEach(p => tvWidget(document.getElementById('ta-' + p), 'embed-widget-technical-analysis.js', {
+    interval: tempo, width: '100%', height: '100%', isTransparent: true, symbol: SIMBOLO[p],
+    showIntervalTabs: false, displayMode: 'single', locale: 'br', colorTheme: 'dark'
+  }, 'carregando medidor…'));
+  document.getElementById('ivs').innerHTML = TEMPOS.map(([v,l]) => `<button class="iv ${v === tempo ? 'on' : ''}" data-v="${v}">${l}</button>`).join('');
+}
+document.getElementById('ivs').addEventListener('click', e => {
+  const v = e.target.dataset && e.target.dataset.v; if(!v || v === tempo) return;
+  tempo = v; try { localStorage.setItem('painelfx-tempo', v); } catch(err){}
+  montaMedidores();
+});
+
+tvWidget(document.getElementById('mkt-pares'), 'embed-widget-tickers.js', {
+  symbols: MERCADO_PARES, isTransparent: true, showSymbolLogo: false, colorTheme: 'dark', locale: 'br'
+}, 'carregando cotações do TradingView…');
+tvWidget(document.getElementById('mkt-motores'), 'embed-widget-tickers.js', {
+  symbols: MERCADO_MOTORES, isTransparent: true, showSymbolLogo: false, colorTheme: 'dark', locale: 'br'
+}, 'carregando motores…');
+montaMedidores();
+
+tick();
+setInterval(tick, 1000);
+
+// ── tela cheia (botão ou tecla F) + tela sem apagar ──
+let lock = null;
+async function telaCheia(){
+  try{
+    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(e){}
+  try{ if('wakeLock' in navigator && !lock) lock = await navigator.wakeLock.request('screen'); }catch(e){}
+}
+document.getElementById('fs').addEventListener('click', telaCheia);
+document.addEventListener('keydown', e => { if(e.key === 'f' || e.key === 'F') telaCheia(); });
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') lock = null; });
+
+// ── esconde o mouse parado (tela dedicada) ──
+let idleT;
+document.addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 3000); });
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "Painel FX",
+  "short_name": "Painel FX",
+  "description": "Relógio de sessões, janelas de horário, calendário e medidores dos 5 pares",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "icons": [
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
