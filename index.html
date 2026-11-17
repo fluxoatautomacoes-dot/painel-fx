@@ -112,6 +112,27 @@ body.idle{cursor:none}
   .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tl{min-height:26rem}
 }
+/* ── MODO COMPACTO: meia tela do tablet (tela dividida), celular, janela estreita ── */
+@media (max-width: 900px){
+  html,body{overflow:auto}
+  .app{height:auto;min-height:100vh;gap:.6rem;padding:.6rem .7rem;grid-template-rows:auto auto auto}
+  .top{grid-template-columns:auto minmax(0,1fr);gap:.8rem}
+  .dial{width:clamp(120px,28vw,180px);margin:0}
+  .legend{display:none}
+  .info{height:auto;min-height:0;overflow:visible;grid-template-rows:none;gap:.5rem}
+  #mkt-motores,#cal,.credit,.ivs>.mu{display:none}
+  .box{padding:.45rem .6rem}
+  .city{padding:.35rem .5rem}
+  .ctime{font-size:1.05rem}
+  .nextname{font-size:.95rem}
+  .nextcd{font-size:1.15rem}
+  .mkt.fita{height:72px}
+  .cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+  .tvta{height:200px}
+  .tvta .tradingview-widget-container{width:150%!important;height:560px!important;transform:scale(.6667)}
+  .tl{grid-template-rows:1.3rem 2rem 0 0 0 0 .3rem repeat(5,1.5rem);min-height:0;grid-template-columns:5.5rem minmax(0,1fr)}
+  .tl-cal,.tl-ses{display:none!important}
+}
 /* ── tela baixa (notebook com barras do navegador, tablet no Chrome) ── */
 @media (max-height: 820px) and (min-aspect-ratio: 1/1){
   .dial{width:min(31vh,30vw)}
@@ -364,14 +385,14 @@ function tick(){
   fx.forEach(([n,k,h],i) => t += `<div class="dot" style="left:${pct(h)};background:var(--ev)" title="${hhmm(h)} · ${n}"></div><div class="elab" style="left:${pct(h)};color:var(--ev);${i%2 ? 'bottom:-.15rem' : 'top:-.15rem'}">${k}</div>`);
   t += `</div>`;
 
-  t += `<div class="lab mu" style="grid-row:3">Calendário</div><div class="trk" style="grid-row:3">`;
+  t += `<div class="lab mu tl-cal" style="grid-row:3">Calendário</div><div class="trk tl-cal" style="grid-row:3">`;
   hoje.forEach((e,i) => t += `<div class="dot" style="left:${pct(e.h)};background:var(--evd);width:${e.impacto>=3?'.75rem':'.55rem'};height:${e.impacto>=3?'.75rem':'.55rem'}" title="${hhmm(e.h)} · ${e.nome}"></div><div class="elab" style="left:${pct(e.h)};color:var(--evd);bottom:-.15rem">${e.curto || e.nome}</div>`);
   if(hoje.length === 0) t += `<div class="elab mu" style="left:50%;top:30%">sem eventos cadastrados hoje</div>`;
   t += `</div>`;
 
   [['TK','Tóquio','#5b8def'],['LON','Londres','#a78bfa'],['NY','Nova York','#f59e0b']].forEach(([k,n,cor],i) => {
     const r = 4 + i, o = !closed && aberto(k);
-    t += `<div class="lab" style="grid-row:${r};color:${o ? '#e5e7eb' : '#8b93a7'}">${n}</div><div class="trk bg" style="grid-row:${r}">`;
+    t += `<div class="lab tl-ses" style="grid-row:${r};color:${o ? '#e5e7eb' : '#8b93a7'}">${n}</div><div class="trk bg tl-ses" style="grid-row:${r}">`;
     segs(...ses[k]).forEach(([a,b]) => t += `<div class="seg" style="left:${a/24*100}%;width:${(b-a)/24*100}%;background:${cor};opacity:${o ? 1 : .55}"></div>`);
     t += `</div>`;
   });
