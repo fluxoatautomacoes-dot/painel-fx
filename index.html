@@ -40,33 +40,35 @@ body.idle{cursor:none}
 .nextcd{font-family:var(--mono);font-size:1.5rem;color:var(--ev)}
 .city{border-top:.15rem solid var(--line);border-radius:0 0 .7rem .7rem}
 .ctime{font-family:var(--mono);font-size:1.4rem;color:#fff}
-.gauge{position:relative;height:.45rem;border-radius:.25rem;background:var(--line)}
-.gauge .neg{position:absolute;left:0;width:50%;height:100%;border-radius:.25rem 0 0 .25rem;background:#3b1d22}
-.gauge .pos{position:absolute;right:0;width:50%;height:100%;border-radius:0 .25rem .25rem 0;background:#173225}
-.gauge .mid{position:absolute;left:50%;top:-.15rem;width:1px;height:.75rem;background:#3a4357}
-.gauge .mk{position:absolute;top:-.25rem;width:.7rem;height:.95rem;border-radius:.2rem;transform:translateX(-50%)}
-.usd{display:flex;align-items:center;gap:.8rem}
-.usd .gauge{flex:1}
 .cal{overflow:hidden;display:flex;flex-direction:column;gap:.25rem}
 .ev{display:grid;grid-template-columns:3.6rem 3.2rem minmax(0,1fr) auto;gap:.5rem;font-size:.85rem;align-items:center;padding:.15rem 0;border-top:1px solid var(--line)}
 .ev.past{opacity:.4}
 .ev .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stars{color:var(--evd);letter-spacing:.05rem}
+.teste{background:#3b2f0b;color:#fcd34d}
 
 /* ── cartões ── */
 .cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.7rem}
 .card{display:flex;flex-direction:column;gap:.35rem}
 .card .row{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem}
 .pname{font-weight:500;font-size:1rem}
-.score{font-family:var(--mono);font-size:1.5rem;font-weight:500}
 .q{font-size:.8rem;text-align:center;padding:.2rem;border-radius:.45rem}
 .q-ok{background:#14532d;color:#86efac}
 .q-good{background:#1f3b35;color:#99f6e4}
 .q-weak{background:var(--line);color:var(--mu)}
 .q-roll{background:var(--roll);color:#fecaca}
 .q-off{background:var(--line);color:var(--mu)}
-.thin{height:.2rem;border-radius:.1rem;background:var(--line)}
-.thin>div{height:100%;border-radius:.1rem}
+
+/* mini-ponteiros: 6 por cartão (M1 … D1), cada um é um medidor do TradingView recortado só no arco */
+.minis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.25rem}
+.mc{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:.4rem;overflow:hidden;cursor:pointer;min-width:0}
+.mc.on{border-color:#e5e7eb}
+.mc .tfl{position:relative;z-index:2;display:block;text-align:center;font-family:var(--mono);font-size:.72rem;color:var(--mu);padding-top:.1rem;pointer-events:none}
+.mc.on .tfl{color:#fff}
+.mc .jan{position:relative;overflow:hidden}
+.mc .dentro{position:absolute;left:0;top:0;width:200px;height:300px;transform-origin:top left}
+.mc .dentro .vazio{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4357;font-size:24px}
+.mc .tampa{position:absolute;inset:0;z-index:3;background:transparent;border:0;cursor:pointer}
 
 /* ── linha do tempo ── */
 .tl{display:grid;grid-template-columns:7.5rem minmax(0,1fr);
@@ -89,7 +91,7 @@ body.idle{cursor:none}
 .qd{width:.55rem;height:.55rem;border-radius:50%;flex:none}
 
 /* ── widgets do TradingView ── */
-.tvta{height:clamp(203px,22vh,280px);margin:0 -.5rem;position:relative;overflow:hidden}
+.tvta{height:clamp(170px,19vh,250px);margin:0 -.5rem;position:relative;overflow:hidden}
 .tvta .tradingview-widget-container{height:470px!important;width:125%!important;transform:scale(.8);transform-origin:top left}
 .tvta .vazio,.mkt .vazio{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a4357;font-size:.8rem;pointer-events:none}
 .mkt{position:relative;padding:.1rem .3rem;height:max(4.6rem,64px);overflow:hidden}
@@ -100,7 +102,6 @@ body.idle{cursor:none}
 .ivs{display:flex;gap:.25rem;align-items:center}
 .iv{background:transparent;color:var(--mu);border:1px solid var(--line);border-radius:.4rem;padding:.15rem .5rem;font:inherit;font-size:.8rem;cursor:pointer}
 .iv.on{background:#1f2737;color:#fff;border-color:#3a4357}
-.foot{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}
 
 /* ── tela em pé (monitor girado) ou janela estreita ── */
 @media (max-aspect-ratio: 1/1){
@@ -163,7 +164,7 @@ body.idle{cursor:none}
       <div class="full head">
         <span id="ses" class="chip"></span>
         <span id="dt" class="mu"></span>
-        <span class="ivs" style="margin-left:auto"><span class="mu">Termômetro:</span><span class="ivs" id="ivs"></span></span>
+        <span class="ivs" style="margin-left:auto"><span class="mu">Ponteiro grande, todos em:</span><span class="ivs" id="ivs"></span></span>
         <button class="btn" id="fs" title="Tecla F" style="margin-left:0">⛶ Tela cheia</button>
         <a class="credit" href="https://br.tradingview.com/" target="_blank" rel="noopener">cotações e medidores: TradingView</a>
       </div>
@@ -185,8 +186,8 @@ body.idle{cursor:none}
 <script src="eventos.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Painel FX · etapa 1 (relógio, sessões, janelas, calendário)
-// Termômetro: lê window.DADOS quando existir (etapa 2). Sem dados → "aguardando dados".
+// Painel FX · cada cartão: ponteiro grande + 6 mini-ponteiros (M1 … D1)
+// Oficial desde 18/11/2026. A versão anterior (só botões) ficou em painel-fx-botoes.html
 // ═══════════════════════════════════════════════════════════════
 const TZ = { BR:'America/Sao_Paulo', LON:'Europe/London', NY:'America/New_York', TK:'Asia/Tokyo' };
 const PARES = ['XAUUSD','EURUSD','GBPUSD','USDJPY','GBPJPY'];
@@ -300,14 +301,6 @@ function desenhaRelogio(br, now, ses, hoje, closed){
   document.getElementById('dial').innerHTML = g;
 }
 
-// ── termômetro (etapa 2: window.DADOS = { XAUUSD:{score,preco,adr}, ... }) ──
-function corScore(s){ return s >= 25 ? '#22c55e' : s <= -25 ? '#ef4444' : '#8b93a7'; }
-function rotulo(s){ return s >= 60 ? 'Compra forte' : s >= 25 ? 'Compra' : s > -25 ? 'Neutro' : s > -60 ? 'Venda' : 'Venda forte'; }
-function gauge(s){
-  const mk = (s === null || s === undefined) ? '' : `<div class="mk" style="left:${50 + s/2}%;background:${corScore(s)}"></div>`;
-  return `<div class="gauge"><div class="neg"></div><div class="pos"></div><div class="mid"></div>${mk}</div>`;
-}
-
 // ═══════════════════════════════════════════════════════════════
 function tick(){
   const d = new Date();
@@ -352,7 +345,6 @@ function tick(){
 
   // calendário do dia
   const cal = document.getElementById('cal');
-  // em tela baixa a caixa do calendário fica pequena demais: esconde em vez de mostrar meia linha
   const fs = parseFloat(getComputedStyle(document.documentElement).fontSize);
   cal.style.visibility = cal.clientHeight < 3.2 * fs ? 'hidden' : 'visible';
   if(hoje.length === 0){
@@ -362,10 +354,10 @@ function tick(){
       `<div class="ev ${e.h*60 <= nowM ? 'past' : ''}"><span class="mono">${hhmm(e.h)}</span><span class="mu">${e.pais || ''}</span><span class="nm" title="${e.nome}">${e.nome}</span><span class="stars">${'★'.repeat(e.impacto || 1)}</span></div>`).join('');
   }
 
-  // tira o aviso "carregando…" de trás dos widgets que já chegaram (o fundo deles é transparente)
+  // tira o aviso "carregando…" de trás dos widgets que já chegaram
   document.querySelectorAll('.vazio').forEach(v => { if(v.parentElement && v.parentElement.querySelector('iframe')) v.remove(); });
 
-  // cartões (só o selo de horário muda a cada segundo; o widget fica intacto)
+  // cartões
   PARES.forEach(p => {
     const [qt, qc] = qualidade(p, now, closed);
     const q = document.getElementById('q-' + p);
@@ -414,7 +406,7 @@ function tick(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// WIDGETS DO TRADINGVIEW (cotação ao vivo + medidor técnico)
+// WIDGETS DO TRADINGVIEW (cotação ao vivo + medidores)
 // ═══════════════════════════════════════════════════════════════
 const SIMBOLO = { XAUUSD:'OANDA:XAUUSD', EURUSD:'OANDA:EURUSD', GBPUSD:'OANDA:GBPUSD', USDJPY:'OANDA:USDJPY', GBPJPY:'OANDA:GBPJPY' };
 const ADR_MEDIO = { XAUUSD:'ADR ≈ US$ 100', EURUSD:'ADR 61 pips', GBPUSD:'ADR 80 pips', USDJPY:'ADR 102 pips', GBPJPY:'ADR 133 pips' };
@@ -422,20 +414,18 @@ const MERCADO_PARES = [
   { proName:'OANDA:XAUUSD', title:'Ouro' }, { proName:'OANDA:EURUSD', title:'EURUSD' }, { proName:'OANDA:GBPUSD', title:'GBPUSD' },
   { proName:'OANDA:USDJPY', title:'USDJPY' }, { proName:'OANDA:GBPJPY', title:'GBPJPY' },
 ];
-// Os símbolos TVC (DXY e juros oficiais) não são liberados em widget. Substitutos testados em 16/11/2026:
-// títulos do Tesouro americano cotados em PREÇO → preço sobe = juro CAI
 const MERCADO_MOTORES = [
   { proName:'CAPITALCOM:DXY',  title:'Dólar (DXY)' },
   { proName:'OANDA:USB10YUSD', title:'Título EUA 10a (↑ = juro ↓)' },
   { proName:'OANDA:USB02YUSD', title:'Título EUA 2a (↑ = juro ↓)' },
   { proName:'OANDA:SPX500USD', title:'S&P 500' },
 ];
-const TEMPOS = [['5m','5m'],['15m','15m'],['1h','1h'],['4h','4h'],['1D','Dia']];
+const TEMPOS = [['1m','M1'],['5m','M5'],['15m','M15'],['1h','H1'],['4h','H4'],['1D','D1']];
+const VALIDOS = TEMPOS.map(([v]) => v);
 
 function tvWidget(el, arquivo, cfg, aviso, tentativa = 0){
   const geracao = String(Math.random());
   el.dataset.geracao = geracao;
-  // se o TradingView não entregar o widget em 9 s, tenta de novo (até 3 vezes)
   setTimeout(() => {
     if(el.dataset.geracao === geracao && !el.querySelector('iframe') && tentativa < 3)
       tvWidget(el, arquivo, cfg, aviso, tentativa + 1);
@@ -449,38 +439,91 @@ function tvWidget(el, arquivo, cfg, aviso, tentativa = 0){
   c.appendChild(w); c.appendChild(s); el.appendChild(c);
 }
 
-// cartões: montados UMA vez
+// recorte do mini-ponteiro dentro de um medidor de 200 × 300 px (medido em 18/11/2026)
+const RECORTE = { x:10, y:105, w:180, h:95 };
+
+// cartões: ponteiro grande + 6 mini-ponteiros (M1 … D1)
 document.getElementById('cards').innerHTML = PARES.map(p => `
   <div class="box card">
     <div class="row"><span class="pname">${p}</span><span class="mu">${ADR_MEDIO[p]}</span></div>
     <div class="tvta" id="ta-${p}"></div>
+    <div class="minis" id="mn-${p}">
+      ${TEMPOS.map(([v,l]) => `
+        <div class="mc" data-p="${p}" data-v="${v}" title="${p} no ${l} · clique para abrir no ponteiro grande">
+          <span class="tfl">${l}</span>
+          <div class="jan"><div class="dentro" id="mi-${p}-${v}"></div></div>
+          <button class="tampa" data-p="${p}" data-v="${v}" aria-label="${p} no ${l}"></button>
+        </div>`).join('')}
+    </div>
     <div class="q" id="q-${p}"></div>
     <div class="mu" style="text-align:center" id="px-${p}"></div>
   </div>`).join('');
 
-let tempo = '15m';
-try { tempo = localStorage.getItem('painelfx-tempo') || '15m'; } catch(e){}
-function montaMedidores(){
-  PARES.forEach(p => tvWidget(document.getElementById('ta-' + p), 'embed-widget-technical-analysis.js', {
-    interval: tempo, width: '100%', height: '100%', isTransparent: true, symbol: SIMBOLO[p],
-    showIntervalTabs: false, displayMode: 'single', locale: 'br', colorTheme: 'dark'
-  }, 'carregando medidor…'));
-  document.getElementById('ivs').innerHTML = TEMPOS.map(([v,l]) => `<button class="iv ${v === tempo ? 'on' : ''}" data-v="${v}">${l}</button>`).join('');
+// tempo do ponteiro grande de cada par (lembrado no navegador)
+const tempos = {};
+PARES.forEach(p => tempos[p] = '15m');
+try {
+  const salvo = JSON.parse(localStorage.getItem('painelfx-tempos') || '{}');
+  PARES.forEach(p => { if(VALIDOS.includes(salvo[p])) tempos[p] = salvo[p]; });
+} catch(e){}
+function salvaTempos(){ try { localStorage.setItem('painelfx-tempos', JSON.stringify(tempos)); } catch(e){} }
+
+function marcaAtivo(p){
+  document.querySelectorAll(`#mn-${p} .mc`).forEach(c => c.classList.toggle('on', c.dataset.v === tempos[p]));
 }
+function montaGrande(p){
+  tvWidget(document.getElementById('ta-' + p), 'embed-widget-technical-analysis.js', {
+    interval: tempos[p], width: '100%', height: '100%', isTransparent: true, symbol: SIMBOLO[p],
+    showIntervalTabs: false, displayMode: 'single', locale: 'br', colorTheme: 'dark'
+  }, 'carregando medidor…');
+  marcaAtivo(p);
+}
+function montaMini(p, v){
+  tvWidget(document.getElementById(`mi-${p}-${v}`), 'embed-widget-technical-analysis.js', {
+    interval: v, width: 200, height: 300, isTransparent: true, symbol: SIMBOLO[p],
+    showIntervalTabs: false, displayMode: 'single', locale: 'br', colorTheme: 'dark'
+  }, '…');
+}
+// encaixa o recorte no tamanho de cada mini (muda com a largura da tela)
+function escalaMinis(){
+  document.querySelectorAll('.mc').forEach(c => {
+    const s = c.clientWidth / RECORTE.w;
+    c.querySelector('.jan').style.height = (RECORTE.h * s) + 'px';
+    c.querySelector('.dentro').style.transform = `scale(${s}) translate(${-RECORTE.x}px, ${-RECORTE.y}px)`;
+  });
+}
+function desenhaTopo(){
+  const igual = PARES.every(p => tempos[p] === tempos[PARES[0]]) ? tempos[PARES[0]] : null;
+  document.getElementById('ivs').innerHTML = TEMPOS.map(([v,l]) => `<button class="iv ${v === igual ? 'on' : ''}" data-v="${v}">${l}</button>`).join('');
+}
+
+document.getElementById('cards').addEventListener('click', e => {
+  const b = e.target.closest('.tampa'); if(!b) return;
+  const p = b.dataset.p, v = b.dataset.v;
+  if(!p || !v || tempos[p] === v) return;
+  tempos[p] = v; salvaTempos(); montaGrande(p); desenhaTopo();
+});
 document.getElementById('ivs').addEventListener('click', e => {
-  const v = e.target.dataset && e.target.dataset.v; if(!v || v === tempo) return;
-  tempo = v; try { localStorage.setItem('painelfx-tempo', v); } catch(err){}
-  montaMedidores();
+  const v = e.target.dataset && e.target.dataset.v; if(!v) return;
+  PARES.forEach(p => { if(tempos[p] !== v){ tempos[p] = v; montaGrande(p); } });
+  salvaTempos(); desenhaTopo();
 });
 
-// pares numa fita rolante: cabem os 5 em qualquer largura de tela
 tvWidget(document.getElementById('mkt-pares'), 'embed-widget-ticker-tape.js', {
   symbols: MERCADO_PARES, isTransparent: true, showSymbolLogo: false, displayMode: 'adaptive', colorTheme: 'dark', locale: 'br'
 }, 'carregando cotações do TradingView…');
 tvWidget(document.getElementById('mkt-motores'), 'embed-widget-tickers.js', {
   symbols: MERCADO_MOTORES, isTransparent: true, showSymbolLogo: false, colorTheme: 'dark', locale: 'br'
 }, 'carregando motores…');
-montaMedidores();
+PARES.forEach(montaGrande);
+desenhaTopo();
+escalaMinis();
+window.addEventListener('resize', escalaMinis);
+
+// os 30 mini-ponteiros entram aos poucos (1 a cada 0,4 s) para não travar a tela nem o TradingView
+const fila = [];
+PARES.forEach(p => TEMPOS.forEach(([v]) => fila.push([p, v])));
+(function proximo(){ const x = fila.shift(); if(!x) return; montaMini(...x); setTimeout(proximo, 400); })();
 
 tick();
 setInterval(tick, 1000);
